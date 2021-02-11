@@ -14,6 +14,7 @@ namespace FSTSP
 
         public static int TruckSpeed = 5;//meters per second
          
-        public static int PolygonSize = 5;
+        public static int PolygonSize = 20; //in paper it says 5, but generation for 5 is taking way too long
+        public static int areaHeight = 10;
     }
 }

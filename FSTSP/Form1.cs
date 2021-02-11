@@ -16,6 +16,7 @@ namespace FSTSP
         public Graph[] nodes;
         public Graph[,,] map;
         public SquareGrid grid;
+        public SquareGrid groundGrid;
         //Drones[] drones;
         public List<Location> ThePath;
         Location Depot;
@@ -53,25 +54,60 @@ namespace FSTSP
         private void buttonRun_Click(object sender, EventArgs e)
         {
             var areaSize = Int16.Parse(areaSizeUpDown.Value.ToString()) * 1000 / BaseConstants.PolygonSize; //sets size in nodes
-            var areaHeight = 10; //150 metres total height
-            Depot = new Location(areaSize / 2, areaSize / 2, 0);
-            short ordersCount;
-            if (!Int16.TryParse(numberOfCustomersTextBox.Text, out ordersCount))
-                ordersCount = 15;
-            
-            grid = new SquareGrid(areaSize, areaSize, areaHeight);
-            GridGeneration.fillGrid(grid, areaSize, areaHeight); //20+ mins for 5km
-            outputTextBox.Text += $"Space of {areaSize* BaseConstants.PolygonSize / 1000} km2 ({areaSize*areaSize*areaHeight} polygons) generated successfully\n";
-            
-            List<Order> orders = new List<Order>();
-            orders = Order.generateOrders(grid, Depot, ordersCount, areaSize);
-            outputTextBox.Text += $"{ordersCount} orders generated successfully\n";
+            Depot = new Location(areaSize / 2, areaSize / 2, 0);     
 
+            generateSpace(areaSize);
+
+            var orders = generateOrders(areaSize);
             var truckOrders = orders.Where(x => x.isDroneFriendly == false);
             var droneOrders = orders.Where(x => x.isDroneFriendly == true);
 
+            var truck = generateTruck("truck1", 3);
+
             doDrone(droneOrders.ToList());
             doTruck(truckOrders.ToList());
+        }
+
+        private void generateSpace(int areaSize)
+        {
+            grid = new SquareGrid(areaSize, areaSize, BaseConstants.areaHeight);
+            GridGeneration.fillGrid(grid, areaSize, BaseConstants.areaHeight);
+
+            groundGrid = new SquareGrid(areaSize, areaSize, 1);
+            groundGrid.walls = grid.walls.Where(location => location.z == 0).ToHashSet();
+
+            outputTextBox.Text += $"Space of {areaSize * BaseConstants.PolygonSize / 1000} km2 ({areaSize * areaSize * BaseConstants.areaHeight} polygons) generated successfully\n";
+        }
+
+        private List<Order> generateOrders(int areaSize)
+        {
+            List<Order> orders = new List<Order>();
+
+            short ordersCount;
+            if (!Int16.TryParse(numberOfCustomersTextBox.Text, out ordersCount))
+                ordersCount = 15;
+
+            orders = Order.generateOrders(grid, Depot, ordersCount, areaSize);
+            outputTextBox.Text += $"{ordersCount} orders generated successfully\n";
+
+            return orders;
+        }
+
+        private Truck generateTruck(string truckID, int numberOfDrones)
+        {
+            var areaLength = Int16.Parse(areaSizeUpDown.Value.ToString()) * 1000;
+
+            var truck = new Truck(truckID, Depot, new List<Drone>());
+            for (int i = 0; i < numberOfDrones; i++)
+            {
+                var drone = new Drone(truckID + "_drone" + (i + 1).ToString(), 
+                                      Convert.ToInt32(areaLength * 0.3),
+                                      2500, 
+                                      Depot);
+                truck.drones.Add(drone);
+            }
+
+            return truck;
         }
 
         private void doDrone(List<Order> droneOrders)
@@ -93,16 +129,16 @@ namespace FSTSP
         private void doTruck(List<Order> truckOrders)
         {
             List<List<Location>> truckPaths = new List<List<Location>>();
-            List<Location> path = new List<Location>();
+            List<Location> path;
 
-            AStarSearch astar = new AStarSearch(grid, Depot, new Location(truckOrders.First().x, truckOrders.First().y, 0));
+            AStarSearch astar = new AStarSearch(groundGrid, Depot, new Location(truckOrders.First().x, truckOrders.First().y, 0));
             path = astar.ReconstructPath(Depot, new Location(truckOrders.First().x, truckOrders.First().y, 0), astar.cameFrom);
             truckPaths.Add(path);
 
             for (int i = 0; i < truckOrders.Count-1; i++)
             {
                 
-                astar = new AStarSearch(grid, 
+                astar = new AStarSearch(groundGrid, 
                                         new Location(truckOrders[i].x, truckOrders[i].y, 0), 
                                         new Location(truckOrders[i+1].x, truckOrders[i+1].y, 0));
                 path = astar.ReconstructPath(new Location(truckOrders[i].x, truckOrders[i].y, 0),
@@ -111,7 +147,7 @@ namespace FSTSP
                 truckPaths.Add(path);
             }
 
-            astar = new AStarSearch(grid, new Location(truckOrders.Last().x, truckOrders.Last().y, 0), Depot);
+            astar = new AStarSearch(groundGrid, new Location(truckOrders.Last().x, truckOrders.Last().y, 0), Depot);
             path = astar.ReconstructPath(new Location(truckOrders.Last().x, truckOrders.Last().y, 0), Depot, astar.cameFrom);
             truckPaths.Add(path);
 
