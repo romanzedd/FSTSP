@@ -51,6 +51,16 @@ namespace FSTSP
             route.MapMaker(ref map, nodes, 41, 41, 4, 55.041513, 82.916838);
         }
 
+        private void buttonTSPtruck_Click(object sender, EventArgs e)
+        {
+            var areaSize = Int16.Parse(areaSizeUpDown.Value.ToString()) * 1000 / BaseConstants.PolygonSize; //sets size in nodes
+            Depot = new Location(areaSize / 2, areaSize / 2, 0);
+            generateSpace(areaSize, 1);
+            groundGrid = grid;
+            var orders = generateOrders(areaSize);
+            doTruck(orders);
+        }
+
         private void buttonRun_Click(object sender, EventArgs e)
         {
             var areaSize = Int16.Parse(areaSizeUpDown.Value.ToString()) * 1000 / BaseConstants.PolygonSize; //sets size in nodes
@@ -59,13 +69,14 @@ namespace FSTSP
             generateSpace(areaSize);
 
             var orders = generateOrders(areaSize);
-            var truckOrders = orders.Where(x => x.isDroneFriendly == false);
-            var droneOrders = orders.Where(x => x.isDroneFriendly == true);
+            Order.sortOrders(ref orders, Depot);
+            //var truckOrders = orders.Where(x => x.isDroneFriendly == false);
+            //var droneOrders = orders.Where(x => x.isDroneFriendly == true);
 
             var truck = generateTruck("truck1", 3);
 
-            doDrone(droneOrders.ToList());
-            doTruck(truckOrders.ToList());
+            //doDrone(droneOrders.ToList());
+            //doTruck(truckOrders.ToList());
         }
 
         private void generateSpace(int areaSize)
@@ -77,6 +88,13 @@ namespace FSTSP
             groundGrid.walls = grid.walls.Where(location => location.z == 0).ToHashSet();
 
             outputTextBox.Text += $"Space of {areaSize * BaseConstants.PolygonSize / 1000} km2 ({areaSize * areaSize * BaseConstants.areaHeight} polygons) generated successfully\n";
+        }
+
+        private void generateSpace(int areaSize, int areaHeight)
+        {
+            grid = new SquareGrid(areaSize, areaSize, areaHeight);
+            GridGeneration.fillGrid(grid, areaSize, areaHeight);
+            outputTextBox.Text += $"Space of {areaSize * BaseConstants.PolygonSize / 1000} km2 ({areaSize * areaSize} polygons) generated successfully\n";
         }
 
         private List<Order> generateOrders(int areaSize)
@@ -203,6 +221,7 @@ namespace FSTSP
                 outputTextBox.Text += $"[{currentTime.ToString(@"hh\:mm\:ss\:fff")}] Truck dropped parcel and is heading to the next client\n";
             }
         }
+
 
     }
 }

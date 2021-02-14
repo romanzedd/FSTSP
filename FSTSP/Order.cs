@@ -10,13 +10,15 @@ namespace FSTSP
     {
         public int x;
         public int y;
+        public int weight;
         public bool isDroneFriendly;
 
-        public Order(int _x, int _y, bool droneFriendly)
+        public Order(int X, int Y, bool droneFriendly, int Weight)
         {
-            x = _x;
-            y = _y;
+            x = X;
+            y = Y;
             isDroneFriendly = droneFriendly;
+            weight = Weight;
         }
 
         public static List<Order> generateOrders(SquareGrid grid, Location Depot, int ordersCount, int areaSize)
@@ -49,10 +51,52 @@ namespace FSTSP
                         isDroneFriendly = true;
                 }
 
-                ordersList.Add(new Order(x, y, isDroneFriendly));
+                ordersList.Add(new Order(x, y, 
+                                         isDroneFriendly,
+                                         rnd.Next(100, 6000)));
                 ordersCount--;
             }
             return ordersList;
+        }
+
+        public static void sortOrders(ref List<Order> orders, Location depot)
+        {
+            List<Order> sorted = new List<Order>();
+
+            Order tempOrder = findClosestOrder(depot, orders);
+            sorted.Add(tempOrder);
+            orders.Remove(tempOrder);
+
+            while (orders.Count() != 0)
+            {
+                tempOrder = findClosestOrder(new Location(sorted.Last().x, sorted.Last().y, 0), orders);
+                sorted.Add(tempOrder);
+                orders.Remove(tempOrder);
+            }
+            orders = sorted;
+        }
+
+        private static Order findClosestOrder(Location current, List<Order> orders)
+        {
+            var closestOrder = orders.FirstOrDefault();
+            var dist = distance(current.x, current.y, closestOrder.x, closestOrder.y);
+
+            foreach(var order in orders)
+            {
+                var tempDist = distance(current.x, current.y, order.x, order.y);
+                if (tempDist < dist)
+                {
+                    dist = tempDist;
+                    closestOrder = order;
+                }
+            }
+
+            return closestOrder;
+        }
+
+        private static double distance(int x1, int y1, int x2, int y2)
+        {
+            return Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2));
         }
     }
 }
