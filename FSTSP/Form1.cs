@@ -19,7 +19,7 @@ namespace FSTSP
         public SquareGrid groundGrid;
         //Drones[] drones;
         public List<Location> ThePath;
-        Location Depot;
+        public static Location Depot;
         public static int DroneTime = 28800;
         public static int TruckTime = 28800;
 
@@ -74,6 +74,7 @@ namespace FSTSP
             //var droneOrders = orders.Where(x => x.isDroneFriendly == true);
 
             var truck = generateTruck("truck1", 3);
+            FSTSPRouting.buildUnitRoute(grid, orders, truck);
 
             //doDrone(droneOrders.ToList());
             //doTruck(truckOrders.ToList());
@@ -119,7 +120,7 @@ namespace FSTSP
             for (int i = 0; i < numberOfDrones; i++)
             {
                 var drone = new Drone(truckID + "_drone" + (i + 1).ToString(), 
-                                      Convert.ToInt32(areaLength * 0.3),
+                                      Convert.ToInt32(areaLength * 0.5),
                                       2500, 
                                       Depot);
                 truck.drones.Add(drone);
@@ -184,7 +185,7 @@ namespace FSTSP
                 currentTime = TimeSpan.FromSeconds(DroneTime);
                 outputTextBox.Text += $"[{currentTime.ToString(@"hh\:mm\:ss\:fff")}] Drone arrived to a client\n";
 
-                DroneTime += BaseConstants.DroneDropDeliveryTime;
+                DroneTime += BaseConstants.DropDeliveryTime;
                 currentTime = TimeSpan.FromSeconds(DroneTime);
                 outputTextBox.Text += $"[{currentTime.ToString(@"hh\:mm\:ss\:fff")}] Drone dropped parcel and is returning to the depot\n";
 
@@ -192,7 +193,7 @@ namespace FSTSP
                 currentTime = TimeSpan.FromSeconds(DroneTime);
                 outputTextBox.Text += $"[{currentTime.ToString(@"hh\:mm\:ss\:fff")}] Drone arrived to the depot\n";
 
-                DroneTime += BaseConstants.DroneDropDeliveryTime;
+                DroneTime += BaseConstants.DropDeliveryTime;
             }
             
         }
@@ -216,7 +217,7 @@ namespace FSTSP
                 currentTime = TimeSpan.FromSeconds(TruckTime);
                 outputTextBox.Text += $"[{currentTime.ToString(@"hh\:mm\:ss\:fff")}] Truck arrived to a client\n";
 
-                TruckTime += BaseConstants.DroneDropDeliveryTime;
+                TruckTime += BaseConstants.DropDeliveryTime;
                 currentTime = TimeSpan.FromSeconds(TruckTime);
                 outputTextBox.Text += $"[{currentTime.ToString(@"hh\:mm\:ss\:fff")}] Truck dropped parcel and is heading to the next client\n";
             }

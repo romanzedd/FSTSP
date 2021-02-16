@@ -95,6 +95,7 @@
     <Compile Include="Space\Map.cs" />
     <Compile Include="Status.cs" />
     <Compile Include="Vehicles\Truck.cs" />
+    <Compile Include="Vehicles\Vehicle.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

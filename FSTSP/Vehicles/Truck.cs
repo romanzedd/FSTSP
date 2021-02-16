@@ -6,21 +6,33 @@ using System.Threading.Tasks;
 
 namespace FSTSP
 {
-    class Truck
+    public class Truck : Vehicle
     {
-        public readonly string id;
         public readonly List<Drone> drones;
-        public Status status = Status.Ready;
-        public Location currentPosition;
-        public Location destination = new Location(-1, -1, -1);
-        public int time = 28800;
-        public List<Order> fulfilledOrders = new List<Order>();
 
         public Truck(string Id, Location Depot, List<Drone> Drones)
         {
             id = Id;
             drones = Drones;
             currentPosition = Depot; // construction is always in the Depot
+            status = Status.Ready;
+            destination = new Location(-1, -1, -1);
+            time = 28800;
+            fulfilledOrders = new List<Order>();
+            log = string.Empty;
+        }
+
+        public static void doTruckDelivery(SquareGrid grid, Truck truck, Location start, Location deliveryLocation)
+        {
+            truck.status = Status.OnMission;
+            var path = simpleRoute(grid, start, deliveryLocation);
+            var pathLength = path.Count * BaseConstants.PolygonSize;
+            var deliveryTime = pathLength / BaseConstants.TruckSpeed + BaseConstants.DropDeliveryTime;
+
+            truck.currentPosition = deliveryLocation;
+            truck.time += deliveryTime;
+            truck.status = Status.Ready;
+            truck.log += $"\nTruck finished delivery to {deliveryLocation} at {deliveryTime.ToString(@"hh\:mm\:ss\")}";
         }
     }
 }

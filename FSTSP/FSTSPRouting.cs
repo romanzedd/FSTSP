@@ -6,17 +6,51 @@ using System.Threading.Tasks;
 
 namespace FSTSP
 {
-    class FSTSPRouting
+    public class FSTSPRouting
     {
         public static void buildUnitRoute(SquareGrid grid, List<Order> orders, Truck truck)
         {
-            if (truck.status.Equals(Status.Ready))
+            while (orders.Count() > 0)
             {
-                var availableDrones = truck.drones.Where(drone => drone.status.Equals(Status.Available)).ToList();
+                if (truck.status.Equals(Status.Ready))
+                {
+                    var availableDrones = truck.drones.Where(drone => drone.status.Equals(Status.Available)).ToList();
+                    var routeSheets = selectDronesOrders(availableDrones, orders); //TODO: рассмотри кейс, когда их ноль. Сейчас грузовик никуда не поедет.
+
+                    List<Location> truckRoute = new List<Location>();
+                    truckRoute.Add(truck.currentPosition);
+                    foreach(var sheet in routeSheets)
+                    {
+                        sheet.drone.status = Status.Prepairing;
+                        truckRoute.Add(sheet.meetingPoint);
+                    }
+
+                    for (int i = 0; i < truckRoute.Count()-1; i++)
+                    {
+                        var awaitingDrones = truck.drones.Where(drone => drone.status.Equals(Status.Awaitng) && drone.currentPosition.Equals(truck.currentPosition)).ToList();
+                        Vehicle.compareAndUpdateTime(awaitingDrones, truck);
+                        Drone.retrieveDrones(truck, awaitingDrones);
+
+                        Truck.doTruckDelivery(grid, truck, truckRoute[i], truckRoute[i + 1]);
+                        var deliveredOrder = orders.Find(order => order.x == truckRoute[i + 1].x && order.y == truckRoute[i + 1].y);
+                        orders.Remove(deliveredOrder);
+
+                        foreach (var sheet in routeSheets)
+                        {
+                            Drone.loadDrones(truck, sheet.drone);
+                            Drone.doDroneDelivery(sheet, grid);
+                            deliveredOrder = orders.Find(order => order.x == sheet.deliveryPoint.x && order.y == sheet.deliveryPoint.y);
+                            orders.Remove(deliveredOrder);
+                        }
+                        routeSheets.Clear();
+                    }
+                    Order.sortOrders(ref orders, truck.currentPosition);
+                }
             }
+
         }
 
-        private void selectDronesOrders(List<Drone> availableDrones, List<Order> orders)
+        private static List<droneRouteSheet> selectDronesOrders(List<Drone> availableDrones, List<Order> orders)
         {
             List<droneRouteSheet> routeSheets = new List<droneRouteSheet>();
             foreach(var drone in availableDrones)
@@ -24,37 +58,38 @@ namespace FSTSP
                 var candidateOrders = orders.Where(order => order.weight < drone.maxWeight);
                 if (candidateOrders.Count() == 0) continue;
 
-                Order orderToDeliver = null;
+                Location orderToDeliver;
                 foreach(var order in candidateOrders)
                 {
-                    if (routeSheets.Where(x => x.deliveryPoint.Equals(new Location(order.x, order.y, 0))).Count() == 0)
+                    if (routeSheets.Where(x => x.deliveryPoint.Equals(new Location(order.x, order.y, 0))
+                                            || x.meetingPoint.Equals(new Location(order.x, order.y, 0))).Count() == 0)
                     {
-                        orderToDeliver = order;
-                        break;
-                    }
-                    else
-                        continue;
-                }
-                if (!(orderToDeliver is null))
-                {
-                    var orderToDeliverIndex = orders.IndexOf(orderToDeliver);
-                    var meetingPoint = orders[orderToDeliverIndex + 1];
-                    var distance = Location.surfaceDistance(drone.currentPosition, new Location(orderToDeliver.x, orderToDeliver.y, 0));
-                    distance += Location.surfaceDistance(new Location(orderToDeliver.x, orderToDeliver.y, 0), new Location(meetingPoint.x, meetingPoint.y, 0));
+                        orderToDeliver = new Location(order.x, order.y, 0);
 
-                    if(distance * BaseConstants.PolygonSize * 1.3 < drone.range)
-                    {
-                        var newRouteSheet = new droneRouteSheet(drone, drone.currentPosition,
-                                                                new Location(orderToDeliver.x, orderToDeliver.y, 0),
-                                                                new Location(meetingPoint.x, meetingPoint.y, 0));
-                        routeSheets.Add(newRouteSheet);
+                        var orderToDeliverIndex = orders.IndexOf(order);
+                        var meetingPoint = orderToDeliverIndex + 1 < orders.Count() ? 
+                                                new Location(orders[orderToDeliverIndex + 1].x, orders[orderToDeliverIndex + 1].y, 0) : MainWindow.Depot;
+                        var distance = Location.surfaceDistance(drone.currentPosition, orderToDeliver);
+                        distance += Location.surfaceDistance(orderToDeliver, meetingPoint);
+                        distance *= BaseConstants.PolygonSize * 1.3;
+
+                        if (distance < drone.range)
+                        {
+                            var newRouteSheet = new droneRouteSheet(drone, 
+                                                                    drone.currentPosition,
+                                                                    orderToDeliver,
+                                                                    meetingPoint);
+                            routeSheets.Add(newRouteSheet);
+                            break;
+                        }
                     }
-                }
-                
+                    else continue;
+                }                
             }
+            return routeSheets;
         }
 
-        private class droneRouteSheet
+        public class droneRouteSheet
         {
             public Drone drone;
             public Location start;

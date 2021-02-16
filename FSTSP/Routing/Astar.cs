@@ -39,6 +39,10 @@ namespace FSTSP
         {
             return Math.Sqrt(Math.Pow(b.x - a.x, 2) + Math.Pow(b.y - a.y, 2));
         }
+        public override string ToString()
+        {
+            return base.ToString() + this.x + ':' + this.y + ':' + this.z;
+        }
     }
 
 

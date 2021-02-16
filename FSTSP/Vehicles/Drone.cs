@@ -6,16 +6,10 @@ using System.Threading.Tasks;
 
 namespace FSTSP
 {
-    public class Drone
+    public class Drone : Vehicle
     {
-        public readonly string id;
         public readonly int range; //metres
         public readonly int maxWeight;
-        public Status status = Status.Ready;
-        public Location currentPosition;
-        public Location destination = new Location(-1,-1,-1);
-        public int time = 28800;
-        public List<Order> fulfilledOrders = new List<Order>();
 
         public Drone(string Id, int Range, int MaxWeight, Location Depot)
         {
@@ -23,6 +17,52 @@ namespace FSTSP
             range = Range;
             maxWeight = MaxWeight;
             currentPosition = Depot; // construction is always in the Depot
+            status = Status.Available;
+            destination = new Location(-1, -1, -1);
+            time = 28800;
+            fulfilledOrders = new List<Order>();
+            log = string.Empty;
+        }
+
+        public static void loadDrones(Truck truck, Drone drone)
+        {
+             drone.time += BaseConstants.DroneLoadTime;
+             truck.time += BaseConstants.DroneLoadTime;
+        }
+        public static void retrieveDrones(Truck truck, List<Drone> drones)
+        {
+            foreach (var drone in drones)
+            {
+                drone.time += BaseConstants.DroneLoadTime;
+                drone.status = Status.Available;
+                truck.time += BaseConstants.DroneLoadTime;
+            }
+        }
+
+        public static void doDroneDelivery(FSTSPRouting.droneRouteSheet routeSheet, SquareGrid grid)
+        {
+            List<Location> path = new List<Location>();
+
+            //routeSheet.drone.time += BaseConstants.DroneLoadTime;
+            routeSheet.drone.status = Status.OnMission;
+
+            path.AddRange(simpleRoute(grid, routeSheet.start, routeSheet.deliveryPoint));
+            var pathLength = path.Count * BaseConstants.PolygonSize;
+            var deliveryTime = pathLength / BaseConstants.DroneSpeed + BaseConstants.DropDeliveryTime;
+            routeSheet.drone.currentPosition = routeSheet.deliveryPoint;
+            routeSheet.drone.time += deliveryTime;
+            routeSheet.drone.log += $"\nDrone finished delivery to {routeSheet.deliveryPoint} at {deliveryTime.ToString(@"hh\:mm\:ss\")}";
+
+            path.Clear();
+            path.AddRange(simpleRoute(grid, routeSheet.deliveryPoint, routeSheet.meetingPoint));
+            pathLength = path.Count * BaseConstants.PolygonSize;
+            deliveryTime = pathLength / BaseConstants.DroneSpeed;
+            routeSheet.drone.currentPosition = routeSheet.meetingPoint;
+            routeSheet.drone.time += deliveryTime;
+            routeSheet.drone.log += $"\nDrone arrived to meeting point: {routeSheet.deliveryPoint} at {deliveryTime.ToString(@"hh\:mm\:ss\")}";
+            routeSheet.drone.status = Status.Awaitng;
+
+
         }
     }
 }
