@@ -9,7 +9,7 @@ namespace FSTSP
     public enum Status
     {
         Offline,
-        Depot,
+        Ready,
         OnMission,
         Awaitng, //at the meeting point
         Available, //drone only - for a drone that is on the truck and available for a mission

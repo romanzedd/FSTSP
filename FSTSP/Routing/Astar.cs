@@ -34,6 +34,11 @@ namespace FSTSP
             this.y = y;
             this.z = z;
         }
+
+        public static double surfaceDistance(Location a, Location b)
+        {
+            return Math.Sqrt(Math.Pow(b.x - a.x, 2) + Math.Pow(b.y - a.y, 2));
+        }
     }
 
 

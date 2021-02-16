@@ -11,10 +11,11 @@ namespace FSTSP
         public readonly string id;
         public readonly int range; //metres
         public readonly int maxWeight;
-        public Status status = Status.Depot;
+        public Status status = Status.Ready;
         public Location currentPosition;
         public Location destination = new Location(-1,-1,-1);
         public int time = 28800;
+        public List<Order> fulfilledOrders = new List<Order>();
 
         public Drone(string Id, int Range, int MaxWeight, Location Depot)
         {

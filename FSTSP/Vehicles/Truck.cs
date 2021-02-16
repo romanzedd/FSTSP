@@ -10,10 +10,11 @@ namespace FSTSP
     {
         public readonly string id;
         public readonly List<Drone> drones;
-        public Status status = Status.Depot;
+        public Status status = Status.Ready;
         public Location currentPosition;
         public Location destination = new Location(-1, -1, -1);
         public int time = 28800;
+        public List<Order> fulfilledOrders = new List<Order>();
 
         public Truck(string Id, Location Depot, List<Drone> Drones)
         {

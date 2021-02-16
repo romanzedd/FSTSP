@@ -75,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseConstants.cs" />
+    <Compile Include="FSTSPRouting.cs" />
     <Compile Include="Vehicles\Drone.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
