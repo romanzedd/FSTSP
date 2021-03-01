@@ -25,6 +25,11 @@ namespace FSTSP
                         truckRoute.Add(sheet.meetingPoint);
                     }
 
+                    if (routeSheets.Count() == 0)
+                    {
+                        truckRoute.Add(new Location(orders.First().x, orders.First().y, 0));
+                    }
+
                     for (int i = 0; i < truckRoute.Count()-1; i++)
                     {
                         var awaitingDrones = truck.drones.Where(drone => drone.status.Equals(Status.Awaitng) && drone.currentPosition.Equals(truck.currentPosition)).ToList();

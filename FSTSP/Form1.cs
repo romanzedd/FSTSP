@@ -120,7 +120,7 @@ namespace FSTSP
             for (int i = 0; i < numberOfDrones; i++)
             {
                 var drone = new Drone(truckID + "_drone" + (i + 1).ToString(), 
-                                      Convert.ToInt32(areaLength * 0.5),
+                                      Convert.ToInt32(areaLength),
                                       2500, 
                                       Depot);
                 truck.drones.Add(drone);

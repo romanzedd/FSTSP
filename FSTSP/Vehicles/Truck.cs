@@ -29,10 +29,16 @@ namespace FSTSP
             var pathLength = path.Count * BaseConstants.PolygonSize;
             var deliveryTime = pathLength / BaseConstants.TruckSpeed + BaseConstants.DropDeliveryTime;
 
-            truck.currentPosition = deliveryLocation;
             truck.time += deliveryTime;
             truck.status = Status.Ready;
             truck.log += $"\nTruck finished delivery to {deliveryLocation} at {deliveryTime.ToString(@"hh\:mm\:ss\")}";
+            
+            truck.currentPosition = deliveryLocation;
+            var availableDrones = truck.drones.Where(x => x.status.Equals(Status.Available)).ToList();
+            foreach(var drone in availableDrones)
+            {
+                drone.currentPosition = truck.currentPosition;
+            }
         }
     }
 }

@@ -64,6 +64,7 @@ namespace FSTSP
             List<Order> sorted = new List<Order>();
 
             Order tempOrder = findClosestOrder(depot, orders);
+            if (tempOrder is null) return;
             sorted.Add(tempOrder);
             orders.Remove(tempOrder);
 
@@ -79,6 +80,7 @@ namespace FSTSP
         private static Order findClosestOrder(Location current, List<Order> orders)
         {
             var closestOrder = orders.FirstOrDefault();
+            if (closestOrder is null) return null;
             var dist = distance(current.x, current.y, closestOrder.x, closestOrder.y);
 
             foreach(var order in orders)
